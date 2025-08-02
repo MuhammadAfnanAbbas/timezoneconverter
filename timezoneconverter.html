@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeZone Converter - Convert Time Across the Globe</title>
-    <meta name="description" content="Easy-to-use timezone converter. Convert time between different timezones instantly with our user-friendly interface.">
+    <title>TimeZone & Timestamp Converter - Convert Time Across the Globe</title>
+    <meta name="description" content="Easy-to-use timezone and timestamp converter. Convert time between different timezones and Unix timestamps instantly.">
     <style>
         * {
             margin: 0;
@@ -57,6 +57,49 @@
             font-size: 1.1rem;
         }
 
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .converter-section {
             background: #f8fafc;
             border-radius: 15px;
@@ -84,7 +127,11 @@
             margin-bottom: 15px;
         }
 
-        input, select {
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        input, select, textarea {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e2e8f0;
@@ -94,13 +141,18 @@
             background: white;
         }
 
-        input:focus, select:focus {
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .convert-btn {
+        .convert-btn, .copy-btn {
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -114,9 +166,18 @@
             margin-top: 10px;
         }
 
-        .convert-btn:hover {
+        .convert-btn:hover, .copy-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            margin-top: 5px;
+        }
+
+        .copy-btn:hover {
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
         }
 
         .result-section {
@@ -143,6 +204,40 @@
         .result-date {
             font-size: 1.1rem;
             opacity: 0.8;
+        }
+
+        /* Timestamp specific styles */
+        .timestamp-result {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .timestamp-result h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .timestamp-value {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: #2d3748;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .timestamp-display {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
         }
 
         .quick-timezones {
@@ -206,41 +301,12 @@
             font-size: 0.9rem;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .input-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .result-time {
-                font-size: 2rem;
-            }
-            
-            .ad-sidebar {
-                position: static;
-            }
-        }
-
         .format-selector {
             background: rgba(102, 126, 234, 0.1);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 20px;
             text-align: center;
-        }
-
-        .format-selector label:first-child {
-            display: block;
-            color: #2d3748;
-            font-weight: 600;
-            margin-bottom: 10px;
         }
 
         .format-toggle {
@@ -262,93 +328,96 @@
             align-items: center;
         }
 
-        input[type="date"], input[type="time"] {
-            cursor: pointer;
-        }
-
-        .timezone-comparison {
-            background: #f8fafc;
+        .current-time-display {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
             border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .comparison-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px;
+            text-align: center;
             margin-bottom: 20px;
         }
 
-        .comparison-header h3 {
+        .current-time-display h3 {
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .live-time {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .current-timestamp {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .current-timestamp h3 {
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .live-timestamp {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timezone-converter-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .timezone-converter-section h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .info-box {
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
             color: #2d3748;
             margin: 0;
+            font-size: 0.95rem;
         }
 
-        .add-timezone-btn {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .result-time {
+                font-size: 2rem;
+            }
+            
+            .ad-sidebar {
+                position: static;
+            }
 
-        .add-timezone-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
-        }
-
-        .comparison-grid {
-            display: grid;
-            gap: 15px;
-        }
-
-        .comparison-item {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .comparison-item select {
-            flex: 1;
-            margin-right: 15px;
-            margin-bottom: 0;
-        }
-
-        .comparison-time {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #667eea;
-            min-width: 120px;
-            text-align: right;
-        }
-
-        .remove-timezone {
-            background: #e53e3e;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-left: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .remove-timezone:hover {
-            background: #c53030;
-            transform: scale(1.1);
+            .tab-btn {
+                font-size: 0.9rem;
+                padding: 12px 15px;
+            }
         }
     </style>
 </head>
@@ -356,81 +425,147 @@
     <div class="container">
         <div class="main-content">
             <div class="header">
-                <h1>TimeZone Converter</h1>
-                <p>Convert time between different timezones instantly</p>
+                <h1>TimeZone & Timestamp Converter</h1>
+                <p>Convert time between different timezones and Unix timestamps</p>
             </div>
 
-            <div class="format-selector">
-                <!-- <label>Time Format:</label> -->
-                <div class="format-toggle">
-                    <input type="radio" id="format12" name="timeFormat" value="12" checked>
-                    <label for="format12">12 Hour (AM/PM)</label>
-                    <input type="radio" id="format24" name="timeFormat" value="24">
-                    <label for="format24">24 Hour</label>
-                </div>
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" onclick="switchTab('timezone')">Timezone Converter</button>
+                <button class="tab-btn" onclick="switchTab('timestamp')">Timestamp Converter</button>
             </div>
 
-            <div class="current-time-display">
-                <h3>Current Local Time</h3>
-                <div class="live-time" id="currentTime"></div>
-            </div>
-
-            <div class="converter-section">
-                <div class="time-input-group">
-                    <label>Select Date and Time</label>
-                    <div class="input-row">
-                        <input type="date" id="dateInput">
-                        <input type="time" id="timeInput">
+            <!-- Timezone Converter Tab -->
+            <div id="timezone-tab" class="tab-content active">
+                <div class="format-selector">
+                    <div class="format-toggle">
+                        <input type="radio" id="format12" name="timeFormat" value="12" checked>
+                        <label for="format12">12 Hour (AM/PM)</label>
+                        <input type="radio" id="format24" name="timeFormat" value="24">
+                        <label for="format24">24 Hour</label>
                     </div>
-                    <div class="input-row">
-                        <select id="fromTimezone">
-                            <option value="">Select source timezone</option>
-                        </select>
-                        <select id="toTimezone">
-                            <option value="">Select target timezone</option>
-                        </select>
+                </div>
+
+                <div class="current-time-display">
+                    <h3>Current Local Time</h3>
+                    <div class="live-time" id="currentTime"></div>
+                </div>
+
+                <div class="converter-section">
+                    <div class="time-input-group">
+                        <label>Select Date and Time</label>
+                        <div class="input-row">
+                            <input type="date" id="dateInput">
+                            <input type="time" id="timeInput">
+                        </div>
+                        <div class="input-row">
+                            <select id="fromTimezone">
+                                <option value="">Select source timezone</option>
+                            </select>
+                            <select id="toTimezone">
+                                <option value="">Select target timezone</option>
+                            </select>
+                        </div>
+                        <button class="convert-btn" onclick="convertTime()">Convert Time</button>
                     </div>
-                    <button class="convert-btn" onclick="convertTime()">Convert Time</button>
+                </div>
+
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <h3>Converted Time</h3>
+                    <div class="result-time" id="resultTime"></div>
+                    <div class="result-date" id="resultDate"></div>
+                </div>
+
+                <div class="quick-timezones">
+                    <div class="timezone-card">
+                        <h4>New York</h4>
+                        <div class="timezone-time" id="nyTime"></div>
+                    </div>
+                    <div class="timezone-card">
+                        <h4>London</h4>
+                        <div class="timezone-time" id="londonTime"></div>
+                    </div>
+                    <div class="timezone-card">
+                        <h4>Tokyo</h4>
+                        <div class="timezone-time" id="tokyoTime"></div>
+                    </div>
+                    <div class="timezone-card">
+                        <h4>Sydney</h4>
+                        <div class="timezone-time" id="sydneyTime"></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="result-section" id="resultSection" style="display: none;">
-                <h3>Converted Time</h3>
-                <div class="result-time" id="resultTime"></div>
-                <div class="result-date" id="resultDate"></div>
-            </div>
+            <!-- Timestamp Converter Tab -->
+            <div id="timestamp-tab" class="tab-content">
+                <div class="current-timestamp">
+                    <h3>Current Unix Timestamp</h3>
+                    <div class="live-timestamp" id="currentTimestamp"></div>
+                </div>
 
-            <div class="timezone-comparison">
-                <div class="comparison-header">
-                    <h3>Compare Multiple Timezones</h3>
-                    <button class="add-timezone-btn" onclick="addTimezoneComparison()">+ Add Timezone</button>
+                <div class="info-box">
+                    <p><strong>What is a Unix Timestamp?</strong> A Unix timestamp is the number of seconds since January 1, 1970, 00:00:00 UTC. It's commonly used in programming and databases.</p>
                 </div>
-                <div class="comparison-grid" id="comparisonGrid">
-                    <!-- Timezone comparisons will be added here -->
-                </div>
-            </div>
 
-            <div class="quick-timezones">
-                <div class="timezone-card">
-                    <h4>New York</h4>
-                    <div class="timezone-time" id="nyTime"></div>
+                <div class="converter-section">
+                    <div class="time-input-group">
+                        <label>Convert Timestamp to Date/Time</label>
+                        <div class="input-row">
+                            <input type="number" id="timestampInput" placeholder="Enter Unix timestamp (e.g., 1640995200)" class="full-width">
+                        </div>
+                        <button class="convert-btn" onclick="convertTimestamp()">Convert Timestamp</button>
+                    </div>
                 </div>
-                <div class="timezone-card">
-                    <h4>London</h4>
-                    <div class="timezone-time" id="londonTime"></div>
+
+                <div class="converter-section">
+                    <div class="time-input-group">
+                        <label>Convert Date/Time to Timestamp</label>
+                        <div class="input-row">
+                            <input type="date" id="timestampDateInput">
+                            <input type="time" id="timestampTimeInput">
+                        </div>
+                        <div class="input-row">
+                            <select id="timestampTimezone" class="full-width">
+                                <option value="">Select timezone</option>
+                            </select>
+                        </div>
+                        <button class="convert-btn" onclick="convertToTimestamp()">Convert to Timestamp</button>
+                    </div>
                 </div>
-                <div class="timezone-card">
-                    <h4>Tokyo</h4>
-                    <div class="timezone-time" id="tokyoTime"></div>
+
+                <div id="timestampResults" style="display: none;">
+                    <div class="timestamp-result">
+                        <h4>Converted Results</h4>
+                        <div class="timestamp-display" id="timestampDisplay"></div>
+                        <div class="timestamp-value" id="timestampValue"></div>
+                        <button class="copy-btn" onclick="copyTimestamp()">Copy Timestamp</button>
+                    </div>
                 </div>
-                <div class="timezone-card">
-                    <h4>Sydney</h4>
-                    <div class="timezone-time" id="sydneyTime"></div>
+
+                <div class="timezone-converter-section" id="timestampTimezoneSection" style="display: none;">
+                    <h3>View in Different Timezones</h3>
+                    <div class="converter-section">
+                        <div class="time-input-group">
+                            <label>Select Timezone to View Converted Time</label>
+                            <div class="input-row">
+                                <select id="viewTimezone" class="full-width">
+                                    <option value="">Select timezone to view</option>
+                                </select>
+                            </div>
+                            <button class="convert-btn" onclick="viewInTimezone()">View in Selected Timezone</button>
+                        </div>
+                    </div>
+                    <div id="timezoneViewResult" style="display: none;">
+                        <div class="timestamp-result">
+                            <h4 id="timezoneViewTitle">Time in Selected Timezone</h4>
+                            <div class="timestamp-display" id="timezoneViewTime"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="footer">
-                <p>&copy; 2024 TimeZone Converter. All rights reserved.</p>
+                <p>&copy; 2024 TimeZone & Timestamp Converter. All rights reserved.</p>
             </div>
         </div>
 
@@ -451,9 +586,8 @@
 
     <script>
         // Global variables
-        let comparisonCount = 0;
-        const maxComparisons = 8;
-
+        let convertedTimestamp = null;
+        
         // Common timezones list
         const timezones = [
             { value: 'America/New_York', label: 'New York (EST/EDT)' },
@@ -479,29 +613,57 @@
             { value: 'Africa/Cairo', label: 'Cairo (EET)' }
         ];
 
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
         // Initialize the page
         function initializePage() {
             // Set current date and time
             const now = new Date();
             document.getElementById('dateInput').value = now.toISOString().split('T')[0];
             document.getElementById('timeInput').value = now.toTimeString().slice(0, 5);
+            
+            // Set timestamp inputs
+            document.getElementById('timestampDateInput').value = now.toISOString().split('T')[0];
+            document.getElementById('timestampTimeInput').value = now.toTimeString().slice(0, 5);
+
+            // Get user's timezone
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
             // Populate timezone dropdowns
-            const fromSelect = document.getElementById('fromTimezone');
-            const toSelect = document.getElementById('toTimezone');
-
-            // Add user's local timezone as default
-            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            fromSelect.innerHTML = `<option value="${userTimezone}">Your Local Time (${userTimezone})</option>`;
+            const selects = ['fromTimezone', 'toTimezone', 'timestampTimezone', 'viewTimezone'];
             
-            timezones.forEach(tz => {
-                fromSelect.innerHTML += `<option value="${tz.value}">${tz.label}</option>`;
-                toSelect.innerHTML += `<option value="${tz.value}">${tz.label}</option>`;
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (selectId === 'fromTimezone') {
+                    select.innerHTML = `<option value="${userTimezone}">Your Local Time (${userTimezone})</option>`;
+                }
+                
+                timezones.forEach(tz => {
+                    select.innerHTML += `<option value="${tz.value}">${tz.label}</option>`;
+                });
             });
 
             // Set default values
-            fromSelect.value = userTimezone;
-            toSelect.value = 'America/New_York';
+            document.getElementById('fromTimezone').value = userTimezone;
+            document.getElementById('toTimezone').value = 'America/New_York';
+            document.getElementById('timestampTimezone').value = userTimezone;
 
             // Start live time updates
             updateLiveTimes();
@@ -521,6 +683,9 @@
             };
             document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
 
+            // Update current timestamp
+            document.getElementById('currentTimestamp').textContent = Math.floor(now.getTime() / 1000);
+
             // Update quick timezone cards
             const timezoneCards = {
                 'nyTime': 'America/New_York',
@@ -530,18 +695,18 @@
             };
 
             Object.entries(timezoneCards).forEach(([elementId, timezone]) => {
-                const cardTimeOptions = {
-                    timeZone: timezone,
-                    hour12: is12HourFormat,
-                    hour: '2-digit',
-                    minute: '2-digit'
-                };
-                const time = new Date().toLocaleTimeString('en-US', cardTimeOptions);
-                document.getElementById(elementId).textContent = time;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    const cardTimeOptions = {
+                        timeZone: timezone,
+                        hour12: is12HourFormat,
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    };
+                    const time = new Date().toLocaleTimeString('en-US', cardTimeOptions);
+                    element.textContent = time;
+                }
             });
-
-            // Update comparison times
-            updateComparisonTimes();
         }
 
         function convertTime() {
@@ -590,77 +755,171 @@
             }
         }
 
-        function addTimezoneComparison() {
-            if (comparisonCount >= maxComparisons) {
-                alert(`Maximum ${maxComparisons} timezone comparisons allowed`);
+        // Timestamp conversion functions
+        function convertTimestamp() {
+            const timestamp = document.getElementById('timestampInput').value;
+            
+            if (!timestamp) {
+                alert('Please enter a timestamp');
                 return;
             }
 
-            comparisonCount++;
-            const comparisonGrid = document.getElementById('comparisonGrid');
-            
-            const comparisonItem = document.createElement('div');
-            comparisonItem.className = 'comparison-item';
-            comparisonItem.id = `comparison-${comparisonCount}`;
-            
-            const select = document.createElement('select');
-            select.id = `comparison-select-${comparisonCount}`;
-            select.innerHTML = '<option value="">Select timezone</option>';
-            
-            timezones.forEach(tz => {
-                select.innerHTML += `<option value="${tz.value}">${tz.label}</option>`;
-            });
-            
-            select.addEventListener('change', updateComparisonTimes);
-            
-            const timeDisplay = document.createElement('div');
-            timeDisplay.className = 'comparison-time';
-            timeDisplay.id = `comparison-time-${comparisonCount}`;
-            timeDisplay.textContent = '--:--';
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-timezone';
-            removeBtn.innerHTML = '×';
-            removeBtn.onclick = () => removeTimezoneComparison(comparisonCount);
-            
-            comparisonItem.appendChild(select);
-            comparisonItem.appendChild(timeDisplay);
-            comparisonItem.appendChild(removeBtn);
-            
-            comparisonGrid.appendChild(comparisonItem);
-        }
-
-        function removeTimezoneComparison(id) {
-            const item = document.getElementById(`comparison-${id}`);
-            if (item) {
-                item.remove();
-            }
-        }
-
-        function updateComparisonTimes() {
-            const is12HourFormat = document.querySelector('input[name="timeFormat"]:checked').value === '12';
-            const now = new Date();
-            
-            for (let i = 1; i <= comparisonCount; i++) {
-                const select = document.getElementById(`comparison-select-${i}`);
-                const timeDisplay = document.getElementById(`comparison-time-${i}`);
+            try {
+                // Convert timestamp to milliseconds if it's in seconds
+                const timestampMs = timestamp.length <= 10 ? timestamp * 1000 : parseInt(timestamp);
+                const date = new Date(timestampMs);
                 
-                if (select && timeDisplay && select.value) {
-                    try {
-                        const timeOptions = {
-                            timeZone: select.value,
-                            hour12: is12HourFormat,
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                        };
-                        const time = now.toLocaleTimeString('en-US', timeOptions);
-                        timeDisplay.textContent = time;
-                    } catch (error) {
-                        timeDisplay.textContent = 'Error';
-                    }
+                if (isNaN(date.getTime())) {
+                    throw new Error('Invalid timestamp');
                 }
+
+                convertedTimestamp = Math.floor(timestampMs / 1000);
+                
+                const is12HourFormat = document.querySelector('input[name="timeFormat"]:checked').value === '12';
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                
+                const timeOptions = {
+                    timeZone: userTimezone,
+                    hour12: is12HourFormat,
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+
+                document.getElementById('timestampDisplay').textContent = date.toLocaleString('en-US', timeOptions);
+                document.getElementById('timestampValue').textContent = `Unix Timestamp: ${convertedTimestamp}`;
+                document.getElementById('timestampResults').style.display = 'block';
+                document.getElementById('timestampTimezoneSection').style.display = 'block';
+
+                // Smooth scroll to result
+                document.getElementById('timestampResults').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Invalid timestamp. Please enter a valid Unix timestamp.');
+                console.error(error);
             }
+        }
+
+        function convertToTimestamp() {
+            const date = document.getElementById('timestampDateInput').value;
+            const time = document.getElementById('timestampTimeInput').value;
+            const timezone = document.getElementById('timestampTimezone').value;
+
+            if (!date || !time || !timezone) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                // Create date in specified timezone
+                const dateTimeString = `${date}T${time}:00`;
+                const tempDate = new Date(dateTimeString);
+                
+                // Get the offset for the specified timezone
+                const offsetDate = new Date(tempDate.toLocaleString('en-US', {timeZone: timezone}));
+                const offset = tempDate.getTime() - offsetDate.getTime();
+                const adjustedDate = new Date(tempDate.getTime() + offset);
+                
+                convertedTimestamp = Math.floor(adjustedDate.getTime() / 1000);
+                
+                const is12HourFormat = document.querySelector('input[name="timeFormat"]:checked').value === '12';
+                
+                const timeOptions = {
+                    timeZone: timezone,
+                    hour12: is12HourFormat,
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+
+                document.getElementById('timestampDisplay').textContent = adjustedDate.toLocaleString('en-US', timeOptions);
+                document.getElementById('timestampValue').textContent = `Unix Timestamp: ${convertedTimestamp}`;
+                document.getElementById('timestampResults').style.display = 'block';
+                document.getElementById('timestampTimezoneSection').style.display = 'block';
+
+                // Smooth scroll to result
+                document.getElementById('timestampResults').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Error converting date/time to timestamp. Please check your inputs.');
+                console.error(error);
+            }
+        }
+
+        function viewInTimezone() {
+            const selectedTimezone = document.getElementById('viewTimezone').value;
+            
+            if (!selectedTimezone) {
+                alert('Please select a timezone');
+                return;
+            }
+
+            if (!convertedTimestamp) {
+                alert('Please convert a timestamp first');
+                return;
+            }
+
+            try {
+                const date = new Date(convertedTimestamp * 1000);
+                const is12HourFormat = document.querySelector('input[name="timeFormat"]:checked').value === '12';
+                
+                const timeOptions = {
+                    timeZone: selectedTimezone,
+                    hour12: is12HourFormat,
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+
+                const timezoneName = timezones.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone;
+                
+                document.getElementById('timezoneViewTitle').textContent = `Time in ${timezoneName}`;
+                document.getElementById('timezoneViewTime').textContent = date.toLocaleString('en-US', timeOptions);
+                document.getElementById('timezoneViewResult').style.display = 'block';
+
+                // Smooth scroll to result
+                document.getElementById('timezoneViewResult').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Error displaying time in selected timezone.');
+                console.error(error);
+            }
+        }
+
+        function copyTimestamp() {
+            if (!convertedTimestamp) {
+                alert('No timestamp to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(convertedTimestamp.toString()).then(() => {
+                // Change button text temporarily
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = convertedTimestamp.toString();
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                alert('Timestamp copied to clipboard!');
+            });
         }
 
         // Add event listeners for format change
