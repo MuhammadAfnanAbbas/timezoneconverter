@@ -675,6 +675,97 @@
         .hidden {
             display: none;
         }
+        /* New timezone comparison styles */
+      .timezone-comparison {
+        background: #f8fafc;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 30px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .timezone-comparison h3 {
+        color: #2d3748;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+      }
+
+      .add-timezone-btn {
+        background: linear-gradient(135deg, #48bb78, #38a169);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+      }
+
+      .add-timezone-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+      }
+
+      .add-timezone-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .comparison-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .comparison-item select {
+        flex: 1;
+        margin: 0;
+      }
+
+      .comparison-time {
+        font-weight: 600;
+        color: #667eea;
+        min-width: 120px;
+        text-align: right;
+      }
+
+      .remove-timezone {
+        background: #e53e3e;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .remove-timezone:hover {
+        background: #c53030;
+        transform: scale(1.1);
+      }
+
+      @media (max-width: 768px) {
+        .comparison-item {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+        }
+
+        .comparison-time {
+          min-width: auto;
+          text-align: center;
+        }
+      }
+
     </style>
 </head>
 <body>
@@ -773,6 +864,17 @@
                             <div class="timezone-time" id="sydneyTime"></div>
                         </div>
                     </div>
+                    <div class="timezone-comparison">
+              <h3>Compare Multiple Timezones</h3>
+              <button
+                class="add-timezone-btn"
+                onclick="addTimezoneComparison()"
+                id="addTimezoneBtn"
+              >
+                + Add Timezone
+              </button>
+              <div id="timezoneComparisons"></div>
+            </div>
                 </div>
 
                 <!-- Timestamp Converter Tab -->
@@ -847,7 +949,7 @@
                 </div>
             </div>
 
-            <div class="ad-sidebar">
+            <!-- <div class="ad-sidebar">
                 <div class="ad-placeholder">
                     <h4>Google Ads</h4>
                     <p>300x250</p>
@@ -859,7 +961,7 @@
                     <p>300x600</p>
                     <small>Replace this with Google AdSense code</small>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <!-- Timezone Only Page -->
@@ -1284,6 +1386,8 @@
         // Global variables
         let convertedTimestamp = null;
         let convertedTimestampTs = null;
+        let comparisonCount = 0;
+      const maxComparisons = 8;
         
         // Common timezones list
         const timezones = [
@@ -1535,6 +1639,82 @@
                 console.error(error);
             }
         }
+        function addTimezoneComparison() {
+        if (comparisonCount >= maxComparisons) {
+          return;
+        }
+
+        comparisonCount++;
+        const comparisonsContainer = document.getElementById(
+          "timezoneComparisons"
+        );
+
+        const comparisonDiv = document.createElement("div");
+        comparisonDiv.className = "comparison-item";
+        comparisonDiv.id = `comparison-${comparisonCount}`;
+
+        comparisonDiv.innerHTML = `
+                <select onchange="updateTimezoneComparisons()" data-comparison="${comparisonCount}">
+                    <option value="">Select timezone</option>
+                    ${timezones
+                      .map(
+                        (tz) =>
+                          `<option value="${tz.value}">${tz.label}</option>`
+                      )
+                      .join("")}
+                </select>
+                <div class="comparison-time" id="time-${comparisonCount}">--:--</div>
+                <button class="remove-timezone" onclick="removeTimezoneComparison(${comparisonCount})">&times;</button>
+            `;
+
+        comparisonsContainer.appendChild(comparisonDiv);
+
+        // Update button state
+        if (comparisonCount >= maxComparisons) {
+          document.getElementById("addTimezoneBtn").disabled = true;
+          document.getElementById("addTimezoneBtn").textContent =
+            "Maximum timezones reached";
+        }
+      }
+      function removeTimezoneComparison(id) {
+        const comparisonDiv = document.getElementById(`comparison-${id}`);
+        if (comparisonDiv) {
+          comparisonDiv.remove();
+          comparisonCount--;
+
+          // Update button state
+          const addBtn = document.getElementById("addTimezoneBtn");
+          addBtn.disabled = false;
+          addBtn.textContent = "+ Add Timezone";
+        }
+      }
+
+      function updateTimezoneComparisons() {
+        const now = new Date();
+        const is12HourFormat =
+          document.querySelector('input[name="timeFormat"]:checked').value ===
+          "12";
+
+        document.querySelectorAll("[data-comparison]").forEach((select) => {
+          const timezone = select.value;
+          const id = select.getAttribute("data-comparison");
+          const timeElement = document.getElementById(`time-${id}`);
+
+          if (timezone && timeElement) {
+            const timeOptions = {
+              timeZone: timezone,
+              hour12: is12HourFormat,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            };
+            const time = now.toLocaleTimeString("en-US", timeOptions);
+            timeElement.textContent = time;
+          } else if (timeElement) {
+            timeElement.textContent = "--:--";
+          }
+        });
+      }
 
         // Timezone page functions
         function convertTimeTz() {
